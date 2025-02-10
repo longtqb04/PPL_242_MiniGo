@@ -284,7 +284,7 @@ class LexerSuite(unittest.TestCase):
 
     def test_173(self):
         """Literals FLOAT"""
-        self.assertTrue(TestLexer.checkLexeme("4.e05","4.e05,<EOF>",173))
+        self.assertTrue(TestLexer.checkLexeme(".e+2",".,e,+,2,<EOF>",173))
 
     def test_174(self):
         """Literals FLOAT"""
@@ -292,7 +292,7 @@ class LexerSuite(unittest.TestCase):
 
     def test_175(self):
         """Literals FLOAT"""
-        self.assertTrue(TestLexer.checkLexeme("09.e-002","09.e-002,<EOF>",175))
+        self.assertTrue(TestLexer.checkLexeme("1.2e+-2","1.2,e,+,-,2,<EOF>",175))
 
     def test_176(self):
         """Literals BIN"""
@@ -348,7 +348,7 @@ class LexerSuite(unittest.TestCase):
 
     def test_189(self):
         """Literals STRING"""
-        self.assertTrue(TestLexer.checkLexeme(""" "String with newline"\n ""","String with newline,\n,<EOF>",189))
+        self.assertTrue(TestLexer.checkLexeme(""" "String with newline"\n ""","String with newline,<EOF>",189))
 
     def test_190(self):
         """Literals STRING"""
@@ -364,11 +364,14 @@ class LexerSuite(unittest.TestCase):
 
     def test_193(self):
         """Skips"""
-        self.assertTrue(TestLexer.checkLexeme("\n","\n,<EOF>",193))
+        self.assertTrue(TestLexer.checkLexeme("\n\t\r","<EOF>",193))
 
     def test_194(self):
         """Skips"""
-        self.assertTrue(TestLexer.checkLexeme("\t\r\f","<EOF>",194))
+        self.assertTrue(TestLexer.checkLexeme("""
+                                            /* test
+                                            */ a /* */
+                                            ""","<EOF>",194))
 
     def test_195(self):
         """Skips"""
@@ -397,4 +400,6 @@ class LexerSuite(unittest.TestCase):
 
     def test_200(self):
         """Skips"""
-        self.assertTrue(TestLexer.checkLexeme("// That's all\n","\n,<EOF>",200))
+        self.assertTrue(TestLexer.checkLexeme("""
+                                              /* a * */
+                                              ""","<EOF>",200))
