@@ -5,6 +5,14 @@ from lexererr import *
 }
 
 @lexer::members {
+def __init__(self, input=None, output:TextIO = sys.stdout):
+    super().__init__(input, output)
+    self.checkVersion("4.9.2")
+    self._interp = LexerATNSimulator(self, self.atn, self.decisionsToDFA, PredictionContextCache())
+    self._actions = None
+    self._predicates = None
+    self.preType = None
+
 def emit(self):
     tk = self.type
     if tk == self.UNCLOSE_STRING:       
@@ -88,16 +96,18 @@ ID: [a-zA-Z_][a-zA-Z0-9_]*;
 
 // Literals
 INT_LIT: SUB | '0' | [1-9][0-9]*;
-FLOAT_LIT: '0' OPT_FRAC OPT_EXP
-         | [1-9] DIGIT* OPT_FRAC OPT_EXP;
+FLOAT_LIT: DIGIT* OPT_FRAC OPT_EXP;
+// FLOAT_LIT: '0' OPT_FRAC OPT_EXP
+//         | [1-9] DIGIT* OPT_FRAC OPT_EXP;
 fragment DIGIT: [0-9];
 // fragment DIGITS: DIGIT+;
 fragment OPT_FRAC: '.' (DIGIT*)?;
-fragment OPT_EXP: ([Ee] [+-]? '0' | [Ee] [+-]? [1-9] DIGIT*)?;
+fragment OPT_EXP: ([Ee] [+-]? DIGIT*)?;
+// fragment OPT_EXP: ([Ee] [+-]? '0' | [Ee] [+-]? [1-9] DIGIT*)?;
 
-BIN: '0'[bB][0-1]+ { self.text = str(int(self.text, 2)) };
-OCT: '0'[oO][0-7]+ { self.text = str(int(self.text, 8)) };
-HEX: '0'[xX][0-9a-fA-F]+ { self.text = str(int(self.text, 16)) };
+BIN: '0'[bB][0-1]+;
+OCT: '0'[oO][0-7]+;
+HEX: '0'[xX][0-9a-fA-F]+;
 
 STRING_LIT: '"' STR_CHAR* '"' {
     self.text = self.text[1:-1]
@@ -168,7 +178,7 @@ type_key_variable: INTEGER | FLOAT | STRING | BOOLEAN;
 
 constants_declared: CONSTANT ID ASSIGN expression (SEMICOLON | NEWLINE) ignore?;
 
-function: FUNCTION ID LP (ID (COMMA ID)* type_key)? (COMMA list_para_infunction)? RP (type_key | array_literal)? CLP ignore? (list_statement_in_function)? CRP;
+function: FUNCTION ID LP (ID (COMMA ID)* type_key)? (COMMA list_para_infunction)? RP (type_key | array_literal)? CLP ignore? (list_statement_in_function)? CRP ignore?;
 
 list_para_infunction: keyword_type_var_infunction | keyword_type_var_infunction COMMA list_para_infunction;
 list_para_infunction_method: keyword_type_var_inmethod | keyword_type_var_inmethod COMMA list_para_infunction_method;
