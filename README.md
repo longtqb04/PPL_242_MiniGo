@@ -7,4 +7,4 @@ A simple programming language reminiscing Go (or Golang). I implemented the lang
 Progress: Finished Assignment 1.
 
 Score distribution:
-- Assignment 1: TBD
+- Assignment 1: Lexer 100/100, Parser TBD.
