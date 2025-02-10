@@ -15,7 +15,20 @@ def __init__(self, input=None, output:TextIO = sys.stdout):
 
 def emit(self):
     tk = self.type
-    if tk == self.UNCLOSE_STRING:       
+    self.preType = tk
+    valid_types = {
+        self.ID, self.INT_LIT, self.FLOAT_LIT, self.STRING_LIT, 
+        self.TRUE, self.FALSE, self.RETURN, self.CONTINUE, self.BREAK, 
+        self.CRP, self.SRP, self.RP, self.NIL
+    }
+    if tk == self.NEWLINE:
+        if self.preType in valid_types:
+            tk = self.SEMICOLON  # Convert newline to semicolon
+            self.text = ';'
+        else:
+            return self.nextToken()  # Ignore the newline
+    
+    elif tk == self.UNCLOSE_STRING:       
         result = super().emit();
         raise UncloseString(result.text);
     elif tk == self.ILLEGAL_ESCAPE:
@@ -26,6 +39,7 @@ def emit(self):
         raise ErrorToken(result.text); 
     else:
         return super().emit();
+
 }
 
 options{
@@ -96,13 +110,13 @@ ID: [a-zA-Z_][a-zA-Z0-9_]*;
 
 // Literals
 INT_LIT: SUB | '0' | [1-9][0-9]*;
-FLOAT_LIT: DIGIT* OPT_FRAC OPT_EXP;
+FLOAT_LIT: DIGIT+ OPT_FRAC OPT_EXP;
 // FLOAT_LIT: '0' OPT_FRAC OPT_EXP
 //         | [1-9] DIGIT* OPT_FRAC OPT_EXP;
 fragment DIGIT: [0-9];
 // fragment DIGITS: DIGIT+;
 fragment OPT_FRAC: '.' (DIGIT*)?;
-fragment OPT_EXP: ([Ee] [+-]? DIGIT*)?;
+fragment OPT_EXP: ([Ee] [+-]? DIGIT+)?;
 // fragment OPT_EXP: ([Ee] [+-]? '0' | [Ee] [+-]? [1-9] DIGIT*)?;
 
 BIN: '0'[bB][0-1]+;
@@ -146,7 +160,7 @@ ILLEGAL_ESCAPE: '"' STR_CHAR* ESC_ILLEGAL '"' {
 program: NEWLINE* declared (declared | NEWLINE)* EOF;
 declared:
 	variables_declared
-        | constants_declared
+    | constants_declared
 	| function_declared
 	| method_declared
 	| struct_declared
@@ -223,10 +237,11 @@ expression6: expression6 (LP index_operators_recur? RP)? dimensions
 expression7: literal | ID | LP expression RP | call_statement;
 
 // Literals
-array_literal: dimensions type_literal (CLP array_elements CRP)?;
+array_literal: dimensions type_literal (CLP (array_elements | array_element_set) CRP)?;
+array_element_set: CLP array_elements CRP | CLP array_elements CRP COMMA array_element_set;
 array_literal_declare: dimensions type_literal;
 array_elements: valid_element | valid_element COMMA array_elements;
-valid_element: INT_LIT | FLOAT_LIT | STRING_LIT | TRUE | FALSE;
+valid_element: INT_LIT | BIN | OCT | HEX | FLOAT_LIT | STRING_LIT | TRUE | FALSE | struct_literal;
 
 dimensions: SLP INT_LIT SRP (SLP INT_LIT SRP)?;
 type_literal: STRING | INTEGER | FLOAT | BOOLEAN | ID;
