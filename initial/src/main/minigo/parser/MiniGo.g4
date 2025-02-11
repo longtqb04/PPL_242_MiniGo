@@ -23,10 +23,10 @@ def emit(self):
     }
     if tk == self.NEWLINE:
         if self.preType in valid_types:
-            tk = self.SEMICOLON  # Convert newline to semicolon
+            tk = self.SEMICOLON
             self.text = ';'
         else:
-            return self.nextToken()  # Ignore the newline
+            return self.nextToken()
     
     elif tk == self.UNCLOSE_STRING:       
         result = super().emit();
@@ -132,7 +132,7 @@ fragment ESC_ILLEGAL: '\\' ~[ntr'\\];
 
 // Skips
 
-NEWLINE: [\n];
+NEWLINE: [\r]? [\n];
 LINE_COMMENT: '//' ~[\r\n]* -> skip;
 BLOCK_COMMENT : '/*' (BLOCK_COMMENT | .)*? '*/' -> skip;
 WS: [ \t\r\f]+ -> skip;
@@ -197,16 +197,16 @@ function: FUNCTION ID LP (ID (COMMA ID)* type_key)? (COMMA list_para_infunction)
 list_para_infunction: keyword_type_var_infunction | keyword_type_var_infunction COMMA list_para_infunction;
 list_para_infunction_method: keyword_type_var_inmethod | keyword_type_var_inmethod COMMA list_para_infunction_method;
 
-struct_declared: TYPE ID STRUCT CLP ignore? (struct_variable_list)? CRP ignore;
+struct_declared: TYPE ID STRUCT CLP ignore* struct_variable_list ignore* CRP ignore?;
 
 struct_variable_list: struct_variable_list_recur ignore?;
 struct_variable_list_recur: ID (type_key | array_literal) | ID (type_key | array_literal) ignore struct_variable_list_recur;
 
-method_declared: FUNCTION LP list_para_inmethod RP ID LP list_para_infunction_method? RP (type_key | array_literal)? CLP (list_statement | argument_list)* CRP;
+method_declared: FUNCTION LP list_para_inmethod RP ID LP list_para_infunction_method? RP (type_key | array_literal)? CLP (list_statement | argument_list)* CRP ignore?;
 
 list_para_inmethod: ID ID | ID ID COMMA list_para_inmethod;
 
-interface_declared: TYPE ID INTERFACE CLP ignore* (list_para_interface)? ignore* CRP ignore?;
+interface_declared: TYPE ID INTERFACE CLP ignore* list_para_interface ignore* CRP ignore?;
 
 list_para_interface: ID LP list_para_infunction? RP (type_key | array_literal)? (ignore ID LP list_para_infunction? RP (type_key | array_literal)?)*;
 
