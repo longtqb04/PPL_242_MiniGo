@@ -348,7 +348,7 @@ class LexerSuite(unittest.TestCase):
 
     def test_189(self):
         """Literals STRING"""
-        self.assertTrue(TestLexer.checkLexeme(""" "String with newline"\n ""","String with newline,<EOF>",189))
+        self.assertTrue(TestLexer.checkLexeme(""" "String with newline"\n ""","String with newline,;,<EOF>",189))
 
     def test_190(self):
         """Literals STRING"""
@@ -371,7 +371,7 @@ class LexerSuite(unittest.TestCase):
         self.assertTrue(TestLexer.checkLexeme("""
                                             /* test
                                             */ a /* */
-                                            ""","<EOF>",194))
+                                            ""","a,;,<EOF>",194))
 
     def test_195(self):
         """Skips"""
