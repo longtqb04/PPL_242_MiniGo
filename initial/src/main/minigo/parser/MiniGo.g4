@@ -16,19 +16,8 @@ def __init__(self, input=None, output:TextIO = sys.stdout):
 def emit(self):
     tk = self.type
     self.preType = tk
-    valid_types = {
-        self.ID, self.INT_LIT, self.FLOAT_LIT, self.STRING_LIT, 
-        self.TRUE, self.FALSE, self.RETURN, self.CONTINUE, self.BREAK, 
-        self.CRP, self.SRP, self.RP, self.NIL
-    }
-    if tk == self.NEWLINE:
-        if self.preType in valid_types:
-            tk = self.SEMICOLON
-            self.text = ';'
-        else:
-            return self.nextToken()
     
-    elif tk == self.UNCLOSE_STRING:       
+    if tk == self.UNCLOSE_STRING:       
         result = super().emit();
         raise UncloseString(result.text);
     elif tk == self.ILLEGAL_ESCAPE:
@@ -132,7 +121,18 @@ fragment ESC_ILLEGAL: '\\' ~[ntr'\\];
 
 // Skips
 
-NEWLINE: [\r]? [\n];
+NEWLINE: [\r]? [\n] {
+    valid_types = {
+        self.ID, self.INT_LIT, self.BIN, self.OCT, self.HEX, self.FLOAT_LIT, self.STRING_LIT, 
+        self.TRUE, self.FALSE, self.RETURN, self.CONTINUE, self.BREAK, 
+        self.CRP, self.SRP, self.RP, self.NIL
+    }
+    if self.preType in valid_types:
+        self.type = self.SEMICOLON
+        self.text = ';'
+    else:
+        return self.nextToken()
+};
 LINE_COMMENT: '//' ~[\r\n]* -> skip;
 BLOCK_COMMENT : '/*' (BLOCK_COMMENT | .)*? '*/' -> skip;
 WS: [ \t\r\f]+ -> skip;
@@ -192,23 +192,23 @@ type_key_variable: INTEGER | FLOAT | STRING | BOOLEAN;
 
 constants_declared: CONSTANT ID ASSIGN expression (SEMICOLON | NEWLINE) ignore?;
 
-function: FUNCTION ID LP (ID (COMMA ID)* type_key)? (COMMA list_para_infunction)? RP (type_key | array_literal)? CLP ignore? (list_statement_in_function)? CRP ignore?;
+function: FUNCTION ID LP (ID (COMMA ID)* type_key)? (COMMA list_para_infunction)? RP (type_key | array_literal)? CLP ignore? list_statement_in_function CRP ignore;
 
 list_para_infunction: keyword_type_var_infunction | keyword_type_var_infunction COMMA list_para_infunction;
 list_para_infunction_method: keyword_type_var_inmethod | keyword_type_var_inmethod COMMA list_para_infunction_method;
 
-struct_declared: TYPE ID STRUCT CLP ignore* struct_variable_list ignore* CRP ignore?;
+struct_declared: TYPE ID STRUCT CLP ignore* struct_variable_list ignore* CRP ignore;
 
 struct_variable_list: struct_variable_list_recur ignore?;
-struct_variable_list_recur: ID (type_key | array_literal) | ID (type_key | array_literal) ignore struct_variable_list_recur;
+struct_variable_list_recur: ID (type_key | array_literal) ignore | ID (type_key | array_literal) ignore struct_variable_list_recur;
 
-method_declared: FUNCTION LP list_para_inmethod RP ID LP list_para_infunction_method? RP (type_key | array_literal)? CLP (list_statement | argument_list)* CRP ignore?;
+method_declared: FUNCTION LP list_para_inmethod RP ID LP list_para_infunction_method? RP (type_key | array_literal)? CLP (list_statement | argument_list)* CRP ignore;
 
 list_para_inmethod: ID ID | ID ID COMMA list_para_inmethod;
 
-interface_declared: TYPE ID INTERFACE CLP ignore* list_para_interface ignore* CRP ignore?;
+interface_declared: TYPE ID INTERFACE CLP ignore* list_para_interface ignore* CRP ignore;
 
-list_para_interface: ID LP list_para_infunction? RP (type_key | array_literal)? (ignore ID LP list_para_infunction? RP (type_key | array_literal)?)*;
+list_para_interface: ID LP list_para_infunction? RP (type_key | array_literal)? ignore | ID LP list_para_infunction? RP (type_key | array_literal)? ignore list_para_interface;
 
 literal:
 	INT_LIT
