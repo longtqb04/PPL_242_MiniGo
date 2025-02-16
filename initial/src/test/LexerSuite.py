@@ -25,7 +25,7 @@ class LexerSuite(unittest.TestCase):
 
     def test_106(self):
         """Identifiers"""
-        self.assertTrue(TestLexer.checkLexeme("abcd AbCd","abcd,AbCd,<EOF>",106))
+        self.assertTrue(TestLexer.checkLexeme(""" "VOTIEN \\r" ""","\"VOTIEN \\r\",<EOF>",106))
 
     def test_107(self):
         """Identifiers"""
@@ -41,22 +41,22 @@ class LexerSuite(unittest.TestCase):
         self.assertTrue(TestLexer.checkLexeme("|","ErrorToken |",110))
 
     def test_111(self):
-        self.assertTrue(TestLexer.checkLexeme(""" "PPL\n" ""","Unclosed string: PPL",111))
+        self.assertTrue(TestLexer.checkLexeme(""" "PPL\n" ""","Unclosed string: \"PPL",111))
 
     def test_112(self):
-        self.assertTrue(TestLexer.checkLexeme(""" "Assignment 1""","Unclosed string: Assignment 1",112))
+        self.assertTrue(TestLexer.checkLexeme(""" "Assignment 1""","Unclosed string: \"Assignment 1",112))
 
     def test_113(self):
-        self.assertTrue(TestLexer.checkLexeme(""" "Abcde\n\n" ""","Unclosed string: Abcde",113))
+        self.assertTrue(TestLexer.checkLexeme(""" "Abcde\n\n" ""","Unclosed string: \"Abcde",113))
 
     def test_114(self):
-        self.assertTrue(TestLexer.checkLexeme(""" "PPL\c" ""","Illegal escape in string: PPL\c",114))
+        self.assertTrue(TestLexer.checkLexeme(""" "PPL\c" ""","Illegal escape in string: \"PPL\c",114))
 
     def test_115(self):
-        self.assertTrue(TestLexer.checkLexeme(""" "Full Lexer\\f" ""","Illegal escape in string: Full Lexer\\f",115))
+        self.assertTrue(TestLexer.checkLexeme(""" "Full Lexer\\f" ""","Illegal escape in string: \"Full Lexer\\f",115))
 
     def test_116(self):
-        self.assertTrue(TestLexer.checkLexeme(""" "Assignment\d" ""","Illegal escape in string: Assignment\d",116))
+        self.assertTrue(TestLexer.checkLexeme(""" "Assignment\d" ""","Illegal escape in string: \"Assignment\d",116))
 
     def test_keyword_var(self):
         """test keyword var"""
@@ -344,23 +344,23 @@ class LexerSuite(unittest.TestCase):
 
     def test_188(self):
         """Literals STRING"""
-        self.assertTrue(TestLexer.checkLexeme(""" "hello" ""","hello,<EOF>",188))
+        self.assertTrue(TestLexer.checkLexeme(""" "hello" ""","\"hello\",<EOF>",188))
 
     def test_189(self):
         """Literals STRING"""
-        self.assertTrue(TestLexer.checkLexeme(""" "String with newline"\n ""","String with newline,;,<EOF>",189))
+        self.assertTrue(TestLexer.checkLexeme(""" "String with newline"\n ""","\"String with newline\",;,<EOF>",189))
 
     def test_190(self):
         """Literals STRING"""
-        self.assertTrue(TestLexer.checkLexeme(""" "PPL \\r" ""","PPL \\r,<EOF>",190))
+        self.assertTrue(TestLexer.checkLexeme(""" "PPL \\r" ""","\"PPL \\r\",<EOF>",190))
 
     def test_191(self):
         """Literals STRING"""
-        self.assertTrue(TestLexer.checkLexeme(""" "I LOVE YOU 3000 \\t" ""","I LOVE YOU 3000 \\t,<EOF>",191))
+        self.assertTrue(TestLexer.checkLexeme(""" "I LOVE YOU 3000 \\t" ""","\"I LOVE YOU 3000 \\t\",<EOF>",191))
 
     def test_192(self):
         """Literals STRING"""
-        self.assertTrue(TestLexer.checkLexeme(""" "\\\"Car\\\"" ""","\\\"Car\\\",<EOF>",192))
+        self.assertTrue(TestLexer.checkLexeme(""" "Car" ""","\"Car\",<EOF>",192))
 
     def test_193(self):
         """Skips"""
