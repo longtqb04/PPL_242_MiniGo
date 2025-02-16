@@ -4,7 +4,8 @@ My solution for the assignment of Principles of Programming Languages (CO3005) c
 
 A simple programming language reminiscing Go (or Golang). I implemented the language following its specifications, using ANTLRv4 and Python.
 
-Progress: Finished Assignment 1.
+Progress: Implementing Assignment 2.
 
 Score distribution:
 - Assignment 1: Lexer 100/100, Parser 100/100.
+- Assignment 2: TBD
