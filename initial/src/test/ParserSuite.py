@@ -44,7 +44,11 @@ class ParserSuite(unittest.TestCase):
 
     def test_207(self):
         """Declared"""
-        input = """var x int;"""
+        input = """
+            var x int = foo() + 3 / 4;
+            var y = "Hello" / 4;   
+            var z str;
+        """
         expect = "successful"
         self.assertTrue(TestParser.checkParser(input,expect,207))
 
@@ -74,7 +78,7 @@ class ParserSuite(unittest.TestCase):
 
     def test_212(self):
         """Declared"""
-        input = """var x = false;"""
+        input = """var z VOTIEN = ID {};"""
         expect = "successful"
         self.assertTrue(TestParser.checkParser(input,expect,212))
 
@@ -122,7 +126,7 @@ class ParserSuite(unittest.TestCase):
 
     def test_220(self):
         """Declared"""
-        input = """var z ID = [3]int{10, 20, 30};"""
+        input = """var z ID = [a]int{10, 20, 30};"""
         expect = "successful"
         self.assertTrue(TestParser.checkParser(input,expect,220))
 
@@ -304,13 +308,13 @@ class ParserSuite(unittest.TestCase):
         self.assertTrue(TestParser.checkParser(input,expect,242))
 
     def test_243(self):
-        """Declared"""
-        input = """type int interface {
-            Add(x, y int) int;
-        }
-        """
-        expect = "Error on line 1 col 6: int"
-        self.assertTrue(TestParser.checkParser(input,expect,243))
+        input = """
+        //Function must end with a semi or newline
+        func A(){
+            return;
+        } var x := 10;"""
+        expect = "Error on line 5 col 11: var"
+        self.assertTrue(TestParser.checkParser(input, expect, 243))
 
     def test_244(self):
         """Declared"""
@@ -349,9 +353,17 @@ class ParserSuite(unittest.TestCase):
         self.assertTrue(TestParser.checkParser(input,expect,248))
 
     def test_249(self):
-        """Expression"""
-        input = """var x bool = a == b;"""
-        expect = "successful"
+        """Statement"""
+        input = """
+        const y = "hello"
+        func Add() Hello{
+            for var i [2]int = 0; foo().a.b(); i[3] := 1 {
+                // loop body
+                print(y + arr[i])
+            }
+        }
+        """
+        expect = "Error on line 4 col 49: ["
         self.assertTrue(TestParser.checkParser(input,expect,249))
 
     def test_250(self):
@@ -361,10 +373,12 @@ class ParserSuite(unittest.TestCase):
         self.assertTrue(TestParser.checkParser(input,expect,250))
 
     def test_251(self):
-        """Expression"""
-        input = """var x bool = 10 + 2 <= 16 && 13 * 6 != 91;"""
+        input = """func main() {
+                a.fun[4][2].fun[1][2][3].fun[4][3].fun.fun[10] := 1;
+            //fun fuction return an array type
+            };"""
         expect = "successful"
-        self.assertTrue(TestParser.checkParser(input,expect,251))
+        self.assertTrue(TestParser.checkParser(input,expect, 251))
 
     def test_252(self):
         """Expression"""
@@ -386,13 +400,13 @@ class ParserSuite(unittest.TestCase):
 
     def test_255(self):
         """Expression"""
-        input = """var x int = 12 * 3;"""
+        input = """const k = [2]int{1}[3][4].foo();"""
         expect = "successful"
         self.assertTrue(TestParser.checkParser(input,expect,255))
 
     def test_256(self):
         """Expression"""
-        input = """var x int = a / b / c;"""
+        input = """const k = ID {a : 2}.c[2] + 2[2] + true.foo() + (2).foo();"""
         expect = "successful"
         self.assertTrue(TestParser.checkParser(input,expect,256))
 
@@ -434,13 +448,17 @@ class ParserSuite(unittest.TestCase):
 
     def test_263(self):
         """Expression"""
-        input = """var x ID = a[1][2][b + 3 + 5];"""
+        input = """
+        func Add(x, y int, b float) {return ;}
+        """
         expect = "successful"
         self.assertTrue(TestParser.checkParser(input,expect,263))
 
     def test_264(self):
         """Expression"""
-        input = """var x ID = a.a.a[2].foo();"""
+        input = """
+        func (c c) Add(x, y int, b float) {return ;}
+        """
         expect = "successful"
         self.assertTrue(TestParser.checkParser(input,expect,264))
 
@@ -452,13 +470,14 @@ class ParserSuite(unittest.TestCase):
 
     def test_266(self):
         """Statement"""
-        input = """func Add() {
-            var x int;
-            var y int;
-            var total = x + y;
-        }
+        input = """
+        func Add() {
+            for var i [2] int = 0; foo().a.b(); i[3] := 1 {
+                return; 
+            }
+        };
         """
-        expect = "successful"
+        expect = "Error on line 3 col 50: ["
         self.assertTrue(TestParser.checkParser(input,expect,266))
 
     def test_267(self):
@@ -496,9 +515,13 @@ class ParserSuite(unittest.TestCase):
 
     def test_270(self):
         """Statement"""
-        input = """func (c calculator) Add(x int) int {
-            c.value += x;
-            return c.value;
+        input = """
+        func Add() {
+            a += 2;
+            a -= a[2].b();
+            a /= 2
+            a *= 2
+            a %= 2;       
         }
         """
         expect = "successful"
@@ -506,63 +529,58 @@ class ParserSuite(unittest.TestCase):
 
     def test_271(self):
         """Statement"""
-        input = """func check(x int) {
-            if (x >= 50) {
-                return "Pass";
-            }
-        }
+        input = """
+        func Add() {
+            a.foo() += 2;       
+        };
         """
-        expect = "successful"
+        expect = "Error on line 3 col 21: +="
         self.assertTrue(TestParser.checkParser(input,expect,271))
 
     def test_272(self):
         """Statement"""
-        input = """func check(x int) {
-            if (x >= 50) {
-                return "Pass";
-            } else {
-                return "Fail";
-            }
-        }
+        input = """
+        func Add() {
+            ID {id:2}.c += 2;       
+        };
         """
-        expect = "successful"
+        expect = "Error on line 3 col 16: {"
         self.assertTrue(TestParser.checkParser(input,expect,272))
 
     def test_273(self):
         """Statement"""
-        input = """func check(x int) {
-            if (x > 0) {
-                return "x is positive";
-            }
-            else if (x < 0) {
-                return "x is negative";
-            }
-            else {
-                return "x = 0";
-            }
-        }
+        input = """
+        func Add() {
+            a[2+3&&2] += foo().b[2];       
+        };
         """
         expect = "successful"
         self.assertTrue(TestParser.checkParser(input,expect,273))
 
     def test_274(self):
         """Statement"""
-        input = """func check(x int) {
-            if x >= 50 {
-                return "Pass";
-            }
-        }
+        input = """
+        func Add() {
+            if (x.foo().b[2]) {
+                if (){return;}
+            } 
+        };
         """
-        expect = "Error on line 2 col 16: x"
+        expect = "Error on line 4 col 21: )"
         self.assertTrue(TestParser.checkParser(input,expect,274))
 
     def test_275(self):
         """Statement"""
-        input = """func check(x int) {
-            if (x >= 50) return "Pass";
-        }
+        input = """
+        func Add() {
+            if (x.foo().b[2]) {
+                if (1){return; } else {return; }
+
+            } else if(2) {return; 
+            }
+        };
         """
-        expect = "Error on line 2 col 26: return"
+        expect = "successful"
         self.assertTrue(TestParser.checkParser(input,expect,275))
 
     def test_276(self):
@@ -576,23 +594,21 @@ class ParserSuite(unittest.TestCase):
     def test_277(self):
         """Statement"""
         input = """
-        func Add(x int, y int) int  {
-            return x + y;
-        }
+        func Add() {
+            for index[2], value := range arr {
+            // index: 0, 1, 2
+            // value: 10, 20, 30
+            return; 
+            }
+        };
         """
-        expect = "successful"
+        expect = "Error on line 3 col 25: ,"
         self.assertTrue(TestParser.checkParser(input,expect,277))
 
     def test_278(self):
         """Statement"""
         input = """
-        func factorial(x int) {
-            if (x == 0 || x == 1) {
-                return 1;
-            } else {
-                return x * factorial(x - 1);
-            }
-        }
+        const a = [1]int{{1, 0x1}, ID{}, 1.2, "s", true, false, nil} + nil;
         """
         expect = "successful"
         self.assertTrue(TestParser.checkParser(input,expect,278))
@@ -610,11 +626,9 @@ class ParserSuite(unittest.TestCase):
     def test_280(self):
         """Statement"""
         input = """
-        func ID() {
-            return return 1 + 11;
-        }
+        func Add(a) [2]id {return ;}
         """
-        expect = "Error on line 3 col 20: return"
+        expect = "Error on line 2 col 19: )"
         self.assertTrue(TestParser.checkParser(input,expect,280))
 
     def test_281(self):
@@ -652,7 +666,7 @@ class ParserSuite(unittest.TestCase):
             }
         }
         """
-        expect = "successful"
+        expect = "Error on line 3 col 49: ["
         self.assertTrue(TestParser.checkParser(input,expect,283))
 
     def test_284(self):
@@ -670,11 +684,9 @@ class ParserSuite(unittest.TestCase):
     def test_285(self):
         """Statement"""
         input = """
-        func ID() {
             for i < 10 {return; }
             for i := 0; i < 10; i += 1 {return; }
             for index, value := range array {return; }
-        } 
         """
         expect = "successful"
         self.assertTrue(TestParser.checkParser(input,expect,285))
@@ -692,13 +704,13 @@ class ParserSuite(unittest.TestCase):
         self.assertTrue(TestParser.checkParser(input,expect,286))
 
     def test_287(self):
-        """Statement"""
-        input = """
-        func Add() {
-            for var i = 0; i <= 10; i += 1 {
-                break;
-                continue;
-            }
+        input = """func B(a ,b int)float {
+        person.getAddress.city := "New York";
+        y := 5.5 % 2.0;
+        str := "Hello" + 42;
+        x := -a + !b * c;
+        result := add(3, 4) * 5;
+        flag := (a > b) && (c <= d) || !(e == f);
         }
         """
         expect = "successful"
@@ -835,3 +847,9 @@ class ParserSuite(unittest.TestCase):
         input = """var Me string = "That's all!";"""
         expect = "successful"
         self.assertTrue(TestParser.checkParser(input,expect,300))
+
+    
+
+    
+
+    
