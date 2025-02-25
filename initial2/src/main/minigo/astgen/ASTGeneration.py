@@ -20,7 +20,7 @@ class ASTGeneration(MiniGoVisitor):
 
     # variables_declared: (inferred_var | keyword_type_var | struct_variable_declared) SEMICOLON ignore?;
     def visitVariables_declared(self, ctx:MiniGoParser.Variables_declaredContext):
-        return self.visitChildren(ctx)
+        return self.visit(ctx.getChild(0))
 
 
     # inferred_var: VARIABLE ID (type_key_variable | array_literal)? ASSIGN expression;
@@ -55,12 +55,28 @@ class ASTGeneration(MiniGoVisitor):
 
     # type_key: INTEGER | FLOAT | STRING | BOOLEAN | ID;
     def visitType_key(self, ctx:MiniGoParser.Type_keyContext):
-        return self.visitChildren(ctx)
+        if ctx.INTEGER():
+            return IntType()
+        elif ctx.FLOAT():
+            return FloatType()
+        elif ctx.STRING():
+            return StringType()
+        elif ctx.BOOLEAN():
+            return BoolType()
+        else:
+            return StructType()
 
 
     # type_key_variable: INTEGER | FLOAT | STRING | BOOLEAN;
     def visitType_key_variable(self, ctx:MiniGoParser.Type_key_variableContext):
-        return self.visitChildren(ctx)
+        if ctx.INTEGER():
+            return IntType()
+        elif ctx.FLOAT():
+            return FloatType()
+        elif ctx.STRING():
+            return StringType()
+        else:
+            return BoolType()
 
 
     # constants_declared: CONSTANT ID ASSIGN expression (SEMICOLON | NEWLINE) ignore?;
