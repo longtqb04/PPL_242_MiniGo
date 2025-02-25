@@ -154,7 +154,7 @@ ILLEGAL_ESCAPE: '"' STR_CHAR* ESC_ILLEGAL '"' {
 
 // ! ---------------- PARSER ----------------------- */
 
-program: NEWLINE* (declared | statement) (declared | statement | NEWLINE)* EOF;
+program: NEWLINE* argument_list EOF;
 declared: variables_declared | constants_declared | function_declared | method_declared | struct_declared | interface_declared;
 
 function_declared: function | (variables_declared ignore);
@@ -234,7 +234,7 @@ index_operators: index_operators_recur ignore?;
 index_operators_recur: expression | expression COMMA index_operators_recur;
 
 argument_list: argument_list_recur ignore?;
-argument_list_recur: expression | expression ignore index_operators_recur;
+argument_list_recur: expression | expression ignore argument_list_recur;
 
 for_argument_list: 
     (variables_declared_for | assign_statement) SEMICOLON expression SEMICOLON assign_statement_for 
