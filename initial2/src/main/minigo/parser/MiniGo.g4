@@ -118,7 +118,7 @@ fragment ESC_ILLEGAL: '\\' ~[ntr'\\];
 
 // Skips
 
-NEWLINE: [\r]? [\n] {
+NEWLINE: [\n] {
     valid_types = {
         self.ID, self.INT_LIT, self.BIN, self.OCT, self.HEX, self.FLOAT_LIT, self.STRING_LIT, 
         self.TRUE, self.FALSE, self.RETURN, self.CONTINUE, self.BREAK, 
@@ -154,7 +154,8 @@ ILLEGAL_ESCAPE: '"' STR_CHAR* ESC_ILLEGAL '"' {
 
 // ! ---------------- PARSER ----------------------- */
 
-program: NEWLINE* argument_list EOF;
+program: NEWLINE* declared+ NEWLINE* EOF;
+
 declared: variables_declared | constants_declared | function_declared | method_declared | struct_declared | interface_declared;
 
 function_declared: function | (variables_declared ignore);
@@ -174,7 +175,7 @@ type_key_variable: INTEGER | FLOAT | STRING | BOOLEAN;
 
 constants_declared: CONSTANT ID ASSIGN expression (SEMICOLON | NEWLINE) ignore?;
 
-function: FUNCTION ID LP (ID (COMMA ID)* (type_key | array_literal))? (COMMA list_para_infunction)? RP (type_key | array_literal)? CLP ignore? list_statement_in_function CRP ignore;
+function: FUNCTION ID LP list_parameters? RP parameter_type? CLP ignore? list_statement_in_function? CRP ignore;
 
 list_para_infunction: keyword_type_var_infunction | keyword_type_var_infunction COMMA list_para_infunction;
 list_para_infunction_method: keyword_type_var_inmethod | keyword_type_var_inmethod COMMA list_para_infunction_method;
@@ -184,13 +185,15 @@ struct_declared: TYPE ID STRUCT CLP ignore* struct_variable_list ignore* CRP ign
 struct_variable_list: struct_variable_list_recur ignore?;
 struct_variable_list_recur: ID (type_key | array_literal) ignore | ID (type_key | array_literal) ignore struct_variable_list_recur;
 
-method_declared: FUNCTION LP list_para_inmethod RP ID LP (ID (COMMA ID)* (type_key | array_literal))? (COMMA list_para_infunction_method)? RP (type_key | array_literal)? CLP (list_statement | argument_list)* CRP ignore;
-
-list_para_inmethod: ID ID | ID ID COMMA list_para_inmethod;
+method_declared: FUNCTION LP ID ID RP ID LP list_parameters? RP parameter_type? CLP list_statement? CRP ignore;
+list_parameters: parameter | parameter list_parameters;
+parameter: list_ID parameter_type;
+parameter_type: type_key | array_literal;
+list_ID: ID | ID COMMA list_ID;
 
 interface_declared: TYPE ID INTERFACE CLP ignore* list_para_interface ignore* CRP ignore;
 
-list_para_interface: ID LP list_para_infunction? RP (type_key | array_literal)? ignore | ID LP list_para_infunction? RP (type_key | array_literal)? ignore list_para_interface;
+list_para_interface: ID LP list_para_infunction? RP parameter_type? ignore | ID LP list_para_infunction? RP parameter_type? ignore list_para_interface;
 
 literal:
 	INT_LIT
@@ -210,11 +213,11 @@ expression2: expression2 (EQ | NEQ | LT | GT | LEQ | GEQ) expression3 | expressi
 expression3: expression3 (ADD | SUB) expression4 | expression4;
 expression4: expression4 (MUL | DIV | MOD) expression5 | expression5;
 expression5: (NOT | SUB) expression5 | expression6;
-expression6: expression6 LP index_operators_recur? RP
+expression6: expression6 DOT ID LP index_operators_recur? RP
     | expression6 SLP expression SRP
     | expression6 DOT ID
     | expression7;
-expression7: literal | ID | LP expression RP | call_statement;
+expression7: literal | ID | LP expression RP | function_call;
 
 // Literals
 array_literal: dimensions type_literal (CLP array_elements CRP)?;
@@ -223,7 +226,8 @@ array_literal_declare: dimensions type_literal;
 array_elements: valid_element | valid_element COMMA array_elements;
 valid_element: INT_LIT | FLOAT_LIT | STRING_LIT | TRUE | FALSE | NIL | array_element_set | struct_literal;
 
-dimensions: SLP (INT_LIT | ID) SRP (SLP (INT_LIT | ID) SRP)?;
+dimensions: SLP cell_type SRP (SLP cell_type SRP)?;
+cell_type: INT_LIT | ID;
 type_literal: STRING | INTEGER | FLOAT | BOOLEAN | ID;
 type_literal_except_struct: STRING | INTEGER | FLOAT | BOOLEAN;
 
@@ -236,10 +240,10 @@ index_operators_recur: expression | expression COMMA index_operators_recur;
 argument_list: argument_list_recur ignore?;
 argument_list_recur: expression | expression ignore argument_list_recur;
 
-for_argument_list: 
-    (variables_declared_for | assign_statement) SEMICOLON expression SEMICOLON assign_statement_for 
-    | ID (COMMA ID)? ASSIGN_VAR RANGE expression
-    | expression;
+// FOR (for_basic | for_step | for_each) ignore* CLP ignore* list_statement CRP ignore*;
+for_step: FOR (variables_declared_for | assign_statement) SEMICOLON expression SEMICOLON assign_statement_for ignore* CLP ignore* list_statement CRP ignore*; 
+for_each: FOR ID (COMMA ID)? ASSIGN_VAR RANGE expression ignore* CLP ignore* list_statement CRP ignore*;
+for_basic: FOR expression ignore* CLP ignore* list_statement CRP ignore*;
 variables_declared_for: VARIABLE ID (type_key_variable | array_literal)? ASSIGN expression;
 
 // Statements
@@ -276,14 +280,15 @@ declared_statement: variables_declared;
 declared_statement_no_ignore: (constants_declared_in_function | inferred_var | keyword_type_var | struct_variable_declared) (SEMICOLON | NEWLINE) ignore?;
 constants_declared_in_function: CONSTANT ID ASSIGN expression;
 
-assign_statement: ID dimensions? (SLP index_operators SRP)? (DOT ID dimensions? (SLP index_operators SRP)?)* (ASSIGN_VAR | ASSIGN_ADD | ASSIGN_SUB | ASSIGN_MUL | ASSIGN_DIV | ASSIGN_MOD) expression ignore?;
+assign_statement: lhs (ASSIGN_VAR | ASSIGN_ADD | ASSIGN_SUB | ASSIGN_MUL | ASSIGN_DIV | ASSIGN_MOD) expression ignore?;
 assign_statement_for: ID (ASSIGN_ADD | ASSIGN_SUB | ASSIGN_MUL | ASSIGN_DIV | ASSIGN_MOD) expression ignore?;
+lhs: ID | lhs DOT ID | lhs SLP expression SRP;
 
-if_statement: IF (LP argument_list RP) ignore* CLP ignore* list_statement? ignore* CRP ignore* elif_statement* ignore* else_statement?;
-elif_statement: ELSE IF (LP argument_list RP) ignore* CLP ignore* list_statement? ignore* CRP;
-else_statement: ELSE ignore* CLP ignore* list_statement? ignore* CRP;
+if_statement: IF (LP expression RP) ignore* CLP ignore* list_statement ignore* CRP ignore* elif_statement* ignore* else_statement?;
+elif_statement: ELSE IF (LP expression RP) ignore* CLP ignore* list_statement ignore* CRP;
+else_statement: ELSE ignore* CLP ignore* list_statement ignore* CRP;
 
-for_statement: FOR for_argument_list ignore* CLP ignore* list_statement? CRP ignore*;
+for_statement: for_basic | for_step | for_each;
 
 break_statement: BREAK ignore;
 
