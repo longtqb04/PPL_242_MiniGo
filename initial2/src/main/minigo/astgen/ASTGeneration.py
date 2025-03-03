@@ -1,6 +1,7 @@
 from MiniGoVisitor import MiniGoVisitor
 from MiniGoParser import MiniGoParser
 from AST import *
+from typing import Tuple
 
 class ASTGeneration(MiniGoVisitor):
     # program: NEWLINE* declared+ NEWLINE* EOF;
@@ -34,14 +35,14 @@ class ASTGeneration(MiniGoVisitor):
 
     # struct_variable_declared: VARIABLE ID ID (ASSIGN expression)?;
     def visitStruct_variable_declared(self, ctx:MiniGoParser.Struct_variable_declaredContext):
-        return VarDecl(ctx.ID(0).getText(), StructType(ctx.ID(1).getText(), None, None), self.visit(ctx.expression()))
+        return VarDecl(ctx.ID(0).getText(), Id(ctx.ID(1).getText()), self.visit(ctx.expression()))
 
 
-    # keyword_type_var: VARIABLE ID type_key_variable (ASSIGN expression | ASSIGN array_literal)? | VARIABLE ID array_literal (ASSIGN expression | ASSIGN array_literal)?;
+    # keyword_type_var: VARIABLE ID (type_key_variable | array_literal) (ASSIGN expression)?;
     def visitKeyword_type_var(self, ctx:MiniGoParser.Keyword_type_varContext):
         if ctx.type_key_variable():
-            return VarDecl(ctx.ID().getText(), self.visit(ctx.type_key_variable()), self.visit(ctx.getChild(4)) if ctx.ASSIGN() else None)
-        return VarDecl(ctx.ID().getText(), self.visit(ctx.array_literal()), self.visit(ctx.getChild(4)) if ctx.ASSIGN() else None)
+            return VarDecl(ctx.ID().getText(), self.visit(ctx.type_key_variable()), self.visit(ctx.expression()) if ctx.ASSIGN() else None)
+        return VarDecl(ctx.ID().getText(), self.visit(ctx.array_literal()), self.visit(ctx.expression()) if ctx.ASSIGN() else None)
 
 
     # keyword_type_var_infunction: (ID | ID LP list_number_lit RP) (type_key | array_literal)?;
@@ -192,7 +193,7 @@ class ASTGeneration(MiniGoVisitor):
         elif ctx.FLOAT_LIT():
             return FloatLiteral(float(ctx.FLOAT_LIT().getText()))
         elif ctx.STRING_LIT():
-            return StringLiteral(ctx.STRING_LIT().getText()[1:-1])
+            return StringLiteral(ctx.STRING_LIT().getText())
         elif ctx.TRUE():
             return BooleanLiteral(True)
         elif ctx.FALSE():
@@ -296,8 +297,10 @@ class ASTGeneration(MiniGoVisitor):
         elif ctx.LP() and ctx.RP():
             return MethCall(self.visit(ctx.expression6()), ctx.ID().getText(), self.visit(ctx.index_operators_recur()) if ctx.index_operators_recur() else [])
         elif ctx.SLP() and ctx.SRP():
+            if type(self.visit(ctx.expression6())) == ArrayCell:
+                return ArrayCell(self.visit(ctx.expression6()).arr, self.visit(ctx.expression6()).idx  + [self.visit(ctx.expression())])
             return ArrayCell(self.visit(ctx.expression6()),[self.visit(ctx.expression())])
-        return FieldAccess(self.visit(ctx.expression6()),ctx.ID().getText())
+        return FieldAccess(self.visit(ctx.expression6()), ctx.ID().getText())
 
 
     # expression7: literal | ID | LP expression RP | function_call;
@@ -340,7 +343,7 @@ class ASTGeneration(MiniGoVisitor):
         elif ctx.FLOAT_LIT():
             return FloatLiteral(float(ctx.FLOAT_LIT().getText()))
         elif ctx.STRING_LIT():
-            return StringLiteral(ctx.STRING_LIT().getText()[1:-1])
+            return StringLiteral(ctx.STRING_LIT().getText())
         elif ctx.TRUE():
             return BooleanLiteral(True)
         elif ctx.FALSE():
@@ -509,45 +512,55 @@ class ASTGeneration(MiniGoVisitor):
     # assign_statement: lhs (ASSIGN_VAR | ASSIGN_ADD | ASSIGN_SUB | ASSIGN_MUL | ASSIGN_DIV | ASSIGN_MOD) expression ignore?;
     def visitAssign_statement(self, ctx:MiniGoParser.Assign_statementContext):
         if ctx.ASSIGN_ADD():
-            return Assign(self.visit(ctx.lhs()), BinaryOp(ctx.ASSIGN_ADD().getText(), ctx.ID().getText(), self.visit(ctx.expression())))
+            return Assign(self.visit(ctx.lhs()), BinaryOp("+", self.visit(ctx.lhs()), self.visit(ctx.expression())))
         elif ctx.ASSIGN_SUB():
-            return Assign(self.visit(ctx.lhs()), BinaryOp(ctx.ASSIGN_SUB().getText(), ctx.ID().getText(), self.visit(ctx.expression())))
+            return Assign(self.visit(ctx.lhs()), BinaryOp("-", self.visit(ctx.lhs()), self.visit(ctx.expression())))
         elif ctx.ASSIGN_MUL():
-            return Assign(self.visit(ctx.lhs()), BinaryOp(ctx.ASSIGN_MUL().getText(), ctx.ID().getText(), self.visit(ctx.expression())))
+            return Assign(self.visit(ctx.lhs()), BinaryOp("*", self.visit(ctx.lhs()), self.visit(ctx.expression())))
         elif ctx.ASSIGN_DIV():
-            return Assign(self.visit(ctx.lhs()), BinaryOp(ctx.ASSIGN_DIV().getText(), ctx.ID().getText(), self.visit(ctx.expression())))
+            return Assign(self.visit(ctx.lhs()), BinaryOp("/", self.visit(ctx.lhs()), self.visit(ctx.expression())))
         elif ctx.ASSIGN_MOD():
-            return Assign(self.visit(ctx.lhs()), BinaryOp(ctx.ASSIGN_MOD().getText(), ctx.ID().getText(), self.visit(ctx.expression())))
+            return Assign(self.visit(ctx.lhs()), BinaryOp("%", self.visit(ctx.lhs()), self.visit(ctx.expression())))
         return Assign(self.visit(ctx.lhs()), self.visit(ctx.expression()))
 
 
     # assign_statement_for: ID (ASSIGN_ADD | ASSIGN_SUB | ASSIGN_MUL | ASSIGN_DIV | ASSIGN_MOD) expression ignore?;
     def visitAssign_statement_for(self, ctx:MiniGoParser.Assign_statement_forContext):
         if ctx.ASSIGN_ADD():
-            return Assign(ctx.ID().getText(), BinaryOp(ctx.ASSIGN_ADD().getText(), ctx.ID().getText(), self.visit(ctx.expression())))
+            return Assign(Id(ctx.ID().getText()), BinaryOp("+", Id(ctx.ID().getText()), self.visit(ctx.expression())))
         elif ctx.ASSIGN_SUB():
-            return Assign(ctx.ID().getText(), BinaryOp(ctx.ASSIGN_SUB().getText(), ctx.ID().getText(), self.visit(ctx.expression())))
+            return Assign(Id(ctx.ID().getText()), BinaryOp("-", Id(ctx.ID().getText()), self.visit(ctx.expression())))
         elif ctx.ASSIGN_MUL():
-            return Assign(ctx.ID().getText(), BinaryOp(ctx.ASSIGN_MUL().getText(), ctx.ID().getText(), self.visit(ctx.expression())))
+            return Assign(Id(ctx.ID().getText()), BinaryOp("*", Id(ctx.ID().getText()), self.visit(ctx.expression())))
         elif ctx.ASSIGN_DIV():
-            return Assign(ctx.ID().getText(), BinaryOp(ctx.ASSIGN_DIV().getText(), ctx.ID().getText(), self.visit(ctx.expression())))
-        return Assign(ctx.ID().getText(), BinaryOp(ctx.ASSIGN_MOD().getText(), ctx.ID().getText(), self.visit(ctx.expression())))
+            return Assign(Id(ctx.ID().getText()), BinaryOp("/", Id(ctx.ID().getText()), self.visit(ctx.expression())))
+        return Assign(Id(ctx.ID().getText()), BinaryOp("%", Id(ctx.ID().getText()), self.visit(ctx.expression())))
     
+
     # lhs: ID | lhs DOT ID | lhs SLP expression SRP;
     def visitLhs(self, ctx:MiniGoParser.LhsContext):
         if ctx.DOT():
-            return FieldAccess(self.visit(ctx.lhs()), Id(ctx.ID().getText))
+            return FieldAccess(self.visit(ctx.lhs()), ctx.ID().getText())
         elif ctx.SLP() and ctx.SRP():
-            return MethodCall(self.visit(ctx.expression()), self.visit(ctx.lhs()))
-        return ctx.ID().getText()
+            if type(self.visit(ctx.lhs())) == ArrayCell:
+                return ArrayCell(self.visit(ctx.lhs()).arr, self.visit(ctx.lhs()).idx  + [self.visit(ctx.expression())])
+            return ArrayCell(self.visit(ctx.lhs()),[self.visit(ctx.expression())])
+        return Id(ctx.ID().getText())
 
 
     # if_statement: IF (LP expression RP) ignore* CLP ignore* list_statement ignore* CRP ignore* elif_statement* ignore* else_statement?;
     def visitIf_statement(self, ctx:MiniGoParser.If_statementContext):
-        if not ctx.ELSE():
-            return If(self.visit(ctx.expression()), Block(self.visit(ctx.list_statement())), None)
-        return If(self.visit(ctx.expression()), Block(self.visit(ctx.list_statement())), self.visit(ctx.elif_statement()) if ctx.elif_statement() else self.visit(ctx.else_statement()))
-        
+        if ctx.else_statement():
+            return If(self.visit(ctx.expression()), Block(self.visit(ctx.list_statement())), recursive_if([self.visit(i) for i in ctx.elif_statement()], self.visit(ctx.else_statement())) if ctx.elif_statement() else self.visit(ctx.else_statement()))
+        return If(self.visit(ctx.expression()), Block(self.visit(ctx.list_statement())), None)
+
+
+    def recursive_if(list_elif_statement: List[Tuple[Expr,Block]], else_statement: Block):
+        if len(list_elif_statement) == 0:
+            return else_statement
+        exp, block = list_elif_statement[0]
+        return If(exp, block, recursive_if(list_elif_statement[1:], else_statement))
+
 
     # elif_statement: ELSE IF (LP expression RP) ignore* CLP ignore* list_statement ignore* CRP;
     def visitElif_statement(self, ctx:MiniGoParser.Elif_statementContext):
@@ -574,13 +587,9 @@ class ASTGeneration(MiniGoVisitor):
         return Continue()
 
 
-    # call_statement: (ID DOT | ID dimensions DOT)? function_call (SEMICOLON | NEWLINE | ignore)*;
+    # call_statement: lhs DOT ID LP index_operators? RP (SEMICOLON | NEWLINE | ignore)*;
     def visitCall_statement(self, ctx:MiniGoParser.Call_statementContext):
-        if ctx.getChildCount() == 1:
-            return self.visit(ctx.function_call())
-        if ctx.dimensions():
-            return FieldAccess(ArrayCell(Id(ctx.ID().getText()), self.visit(ctx.dimensions())), self.visit(ctx.function_call()))
-        return FieldAccess(Id(ctx.ID().getText()), self.visit(ctx.function_call()))
+        return MethCall(self.visit(ctx.lhs()), ctx.ID().getText(), self.visit(index_operators()) if ctx.index_operators() else [])
 
 
     # function_call: ID LP index_operators? RP;
