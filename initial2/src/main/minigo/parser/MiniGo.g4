@@ -118,17 +118,20 @@ fragment ESC_ILLEGAL: '\\' ~[ntr'\\];
 
 // Skips
 
-NEWLINE: [\n] {
-    valid_types = {
-        self.ID, self.INT_LIT, self.BIN, self.OCT, self.HEX, self.FLOAT_LIT, self.STRING_LIT, 
-        self.TRUE, self.FALSE, self.RETURN, self.CONTINUE, self.BREAK, 
-        self.CRP, self.SRP, self.RP, self.NIL
-    }
-    if self.preType in valid_types:
-        self.type = self.SEMICOLON
-        self.text = ';'
+NEWLINE: [\r]? [\n] {
+    tk = self.preType
+    if (tk):
+        valid_types = [
+            self.ID, self.INT_LIT, self.FLOAT_LIT, self.STRING_LIT, 
+            self.TRUE, self.FALSE, self.RETURN, self.CONTINUE, self.BREAK, 
+            self.CRP, self.SRP, self.RP, self.NIL
+        ]
+        if tk in valid_types:
+            self.text = ';'
+        else:
+            self.skip()
     else:
-        return self.nextToken()
+        self.skip()
 };
 LINE_COMMENT: '//' ~[\r\n]* -> skip;
 BLOCK_COMMENT : '/*' (BLOCK_COMMENT | .)*? '*/' -> skip;
@@ -165,8 +168,7 @@ variables_declared: (inferred_var | keyword_type_var | struct_variable_declared)
 inferred_var: VARIABLE ID (type_key_variable | array_literal)? ASSIGN expression;
 struct_variable_declared: VARIABLE ID ID (ASSIGN expression)?;
 
-keyword_type_var: VARIABLE ID type_key_variable (ASSIGN expression | ASSIGN array_literal)?
-    | VARIABLE ID array_literal (ASSIGN expression | ASSIGN array_literal)?;
+keyword_type_var: VARIABLE ID (type_key_variable | array_literal) (ASSIGN expression)?;
 keyword_type_var_infunction: (ID | ID LP list_number_lit RP) (type_key | array_literal)?;
 keyword_type_var_inmethod: (ID | ID LP list_number_lit RP) (type_key | array_literal);
 list_number_lit: INT_LIT | INT_LIT COMMA list_number_lit | FLOAT_LIT | FLOAT_LIT COMMA list_number_lit;
@@ -186,7 +188,7 @@ struct_variable_list: struct_variable_list_recur ignore?;
 struct_variable_list_recur: ID (type_key | array_literal) ignore | ID (type_key | array_literal) ignore struct_variable_list_recur;
 
 method_declared: FUNCTION LP ID ID RP ID LP list_parameters? RP parameter_type? CLP list_statement? CRP ignore;
-list_parameters: parameter | parameter list_parameters;
+list_parameters: parameter | parameter COMMA list_parameters;
 parameter: list_ID parameter_type;
 parameter_type: type_key | array_literal;
 list_ID: ID | ID COMMA list_ID;
@@ -294,7 +296,7 @@ break_statement: BREAK ignore;
 
 continue_statement: CONTINUE ignore;
 
-call_statement: (ID DOT | ID dimensions DOT)? function_call (SEMICOLON | NEWLINE | ignore)*;
+call_statement: (lhs DOT)? ID LP index_operators? RP (SEMICOLON | NEWLINE | ignore)*;
 function_call: ID LP index_operators? RP;
 
 return_statement: RETURN ignore | RETURN expression;
