@@ -169,8 +169,6 @@ inferred_var: VARIABLE ID (type_key_variable | array_literal)? ASSIGN expression
 struct_variable_declared: VARIABLE ID ID (ASSIGN expression)?;
 
 keyword_type_var: VARIABLE ID (type_key_variable | array_literal) (ASSIGN expression)?;
-keyword_type_var_infunction: (ID | ID LP list_number_lit RP) (type_key | array_literal)?;
-keyword_type_var_inmethod: (ID | ID LP list_number_lit RP) (type_key | array_literal);
 list_number_lit: INT_LIT | INT_LIT COMMA list_number_lit | FLOAT_LIT | FLOAT_LIT COMMA list_number_lit;
 type_key: INTEGER | FLOAT | STRING | BOOLEAN | ID;
 type_key_variable: INTEGER | FLOAT | STRING | BOOLEAN;
@@ -178,9 +176,6 @@ type_key_variable: INTEGER | FLOAT | STRING | BOOLEAN;
 constants_declared: CONSTANT ID ASSIGN expression (SEMICOLON | NEWLINE) ignore?;
 
 function: FUNCTION ID LP list_parameters? RP parameter_type? CLP ignore? list_statement_in_function? CRP ignore;
-
-list_para_infunction: keyword_type_var_infunction | keyword_type_var_infunction COMMA list_para_infunction;
-list_para_infunction_method: keyword_type_var_inmethod | keyword_type_var_inmethod COMMA list_para_infunction_method;
 
 struct_declared: TYPE ID STRUCT CLP ignore* struct_variable_list ignore* CRP ignore;
 
@@ -195,7 +190,7 @@ list_ID: ID | ID COMMA list_ID;
 
 interface_declared: TYPE ID INTERFACE CLP ignore* list_para_interface ignore* CRP ignore;
 
-list_para_interface: ID LP list_para_infunction? RP parameter_type? ignore | ID LP list_para_infunction? RP parameter_type? ignore list_para_interface;
+list_para_interface: ID LP list_parameters? RP parameter_type? ignore | ID LP list_parameters? RP parameter_type? ignore list_para_interface;
 
 literal:
 	INT_LIT
@@ -228,7 +223,7 @@ array_literal_declare: dimensions type_literal;
 array_elements: valid_element | valid_element COMMA array_elements;
 valid_element: INT_LIT | FLOAT_LIT | STRING_LIT | TRUE | FALSE | NIL | array_element_set | struct_literal;
 
-dimensions: SLP cell_type SRP (SLP cell_type SRP)?;
+dimensions: SLP cell_type SRP (SLP cell_type SRP)*;
 cell_type: INT_LIT | ID;
 type_literal: STRING | INTEGER | FLOAT | BOOLEAN | ID;
 type_literal_except_struct: STRING | INTEGER | FLOAT | BOOLEAN;
@@ -242,8 +237,7 @@ index_operators_recur: expression | expression COMMA index_operators_recur;
 argument_list: argument_list_recur ignore?;
 argument_list_recur: expression | expression ignore argument_list_recur;
 
-// FOR (for_basic | for_step | for_each) ignore* CLP ignore* list_statement CRP ignore*;
-for_step: FOR (variables_declared_for | assign_statement) SEMICOLON expression SEMICOLON assign_statement_for ignore* CLP ignore* list_statement CRP ignore*; 
+for_step: FOR (variables_declared_for | assign_statement_for) SEMICOLON expression SEMICOLON assign_statement_for ignore* CLP ignore* list_statement CRP ignore*; 
 for_each: FOR ID (COMMA ID)? ASSIGN_VAR RANGE expression ignore* CLP ignore* list_statement CRP ignore*;
 for_basic: FOR expression ignore* CLP ignore* list_statement CRP ignore*;
 variables_declared_for: VARIABLE ID (type_key_variable | array_literal)? ASSIGN expression;
@@ -283,7 +277,7 @@ declared_statement_no_ignore: (constants_declared_in_function | inferred_var | k
 constants_declared_in_function: CONSTANT ID ASSIGN expression;
 
 assign_statement: lhs (ASSIGN_VAR | ASSIGN_ADD | ASSIGN_SUB | ASSIGN_MUL | ASSIGN_DIV | ASSIGN_MOD) expression ignore?;
-assign_statement_for: ID (ASSIGN_ADD | ASSIGN_SUB | ASSIGN_MUL | ASSIGN_DIV | ASSIGN_MOD) expression ignore?;
+assign_statement_for: ID (ASSIGN_VAR | ASSIGN_ADD | ASSIGN_SUB | ASSIGN_MUL | ASSIGN_DIV | ASSIGN_MOD) expression ignore?;
 lhs: ID | lhs DOT ID | lhs SLP expression SRP;
 
 if_statement: IF (LP expression RP) ignore* CLP ignore* list_statement ignore* CRP ignore* elif_statement* ignore* else_statement?;
