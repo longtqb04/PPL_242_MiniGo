@@ -7,6 +7,6 @@ A simple programming language reminiscing Go (or Golang). I implemented the lang
 Progress: Implementing Assignment 3.
 
 Score distribution:
-- Assignment 1: Lexer 97/100, Parser 12/100 (5.5).
-- Assignment 2: TBD
+- Assignment 1: Lexer 97/100, Parser 12/100 (5.5)
+- Assignment 2: 91/100 (9.1)
 - Assignment 3: TBD
