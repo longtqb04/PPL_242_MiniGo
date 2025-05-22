@@ -10,4 +10,4 @@ Score distribution:
 - Assignment 1: Lexer 97/100, Parser 12/100
 - Assignment 2: 91/100
 - Assignment 3: 113/125
-- Assignment 4: TBD
+- Assignment 4: 96/101
